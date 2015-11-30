@@ -1,0 +1,184 @@
+extends ../layout
+
+block content
+    .row
+        .col-md-12            
+            .lists
+                h2 我修改过的游戏
+                .panel-heading
+                    .filter-option
+                        label 游戏类型
+                        select.order-status
+                            option(value="") 全部
+                            - each type in categorys
+                                option(value='#{type.id}') #{type.name}
+                    
+                    .filter-option
+                        label.fl-left 修改时间
+
+                        .ta_date#div_date1
+                            span.date_title#date1
+                            a.opt_sel#input_trigger1(href="#")
+                                i.i_orderd
+                    .widget.widget-search.fl-right
+                        form(action='/', onsubmit='return searchGame();')
+                            input.form-control(type="text", name="key", id="key", value="", required="required", placeholder="游戏名")
+                            button(type="submit").btn.btn-info 搜索
+
+                table.table.table-striped
+                    thead
+                        tr
+                            th 游戏名
+                            th 状态
+                            th 修改日期
+                            th 查看
+                            th 操作
+                    tbody
+                        - each item in games
+                            tr
+                                td.game-item                                    
+                                    img(src='/uploaded/files/#{item.game.thumb}')
+                                    span #{item.game.name}
+                                    span 修改次数：#{item.modify}
+                                td #{item.statusname}
+                                td #{moment(item.modifytime).format('LLL')}
+
+                                td 
+                                    a.btn.btn-danger.btn-xs.pay-order(href='#{adminDir}/usergame/#{item.id}/playrecord') 游戏记录
+                                    br
+                                    a.btn.btn-danger.btn-xs(href='#{adminDir}/usergame/#{item.id}/integralrecord') 积分记录
+                                    br
+                                    a.btn.btn-danger.btn-xs(href='#{adminDir}/usergame/#{item.id}/payrecord') 消费记录
+                        
+                                td 
+                                    a.btn.btn-danger.btn-xs.pay-order(href='#{adminDir}/usergame/#{item.id}/edit') 修改
+                                    br
+                                    if (item.status==1)
+                                        a.btn.btn-danger.btn-xs.btn-change(href='#', data-id='#{item.id}') 下线
+                                    else
+                                        a.btn.btn-danger.btn-xs.btn-change(href='#', data-id='#{item.id}') 发布
+
+                                    br
+                                    a.btn.btn-danger.btn-xs(href='#{adminDir}/usergame/#{item.id}/del') 删除
+                        
+                if (pageInfo && pageInfo.totalPage > 1)
+                    include ../mixin
+                    +pagination(pageInfo)
+
+block foot-js
+    link(rel='stylesheet', href='/assets/plugins/pickerDateRange/css/dateRange.css')
+    //link(rel='stylesheet', href='/assets/plugins/pickerDateRange/css/monthPicker.css')
+    script(src='/assets/plugins/pickerDateRange/js/dateRange.js')
+    //script(src='/assets/plugins/pickerDateRange/js/monthPicker.js')
+    script#J_tmpl_comment_item(type='x-tmpl-mustache')
+        {{#data}}
+        tr
+            td.game-item                                    
+                img(src='/uploaded/files/{{game.thumb}}')
+                span {{game.name}}
+                span 修改次数：{{modify}}
+            td {{statusname}}
+            td {{outtime}}
+            td 
+                a.btn.btn-danger.btn-xs.pay-order(href='#{adminDir}/usergame/{{_id}}/playrecord') 游戏记录
+                br
+                a.btn.btn-danger.btn-xs(href='#{adminDir}/usergame/{{_id}}/integralrecord') 积分记录
+                br
+                a.btn.btn-danger.btn-xs(href='#{adminDir}/usergame/{{_id}}/payrecord') 消费记录
+    
+            td 
+                a.btn.btn-danger.btn-xs.pay-order(href='#{adminDir}/usergame/{{_id}}/modify') 修改
+                br
+                a.btn.btn-danger.btn-xs(href='#{adminDir}/usergame/{{_id}}/change') 发布
+                br
+                a.btn.btn-danger.btn-xs(href='#{adminDir}/usergame/{{_id}}/del') 删除
+    
+        {{/data}}
+
+    script.
+        var token = '#{token}';
+
+        $(function(){
+            var dateRange1 = new pickerDateRange('date1', {
+                isTodayValid : true,
+                startDate : '2015-09-01',
+                endDate : '2015-09-31',
+                needCompare : false,
+                defaultText : ' 至 ',
+                autoSubmit : true,
+                inputTrigger : 'input_trigger1',
+                theme : 'ta',
+                success : function(obj) {
+                    //- console.log('开始时间 : ' + obj.startDate + '<br/>结束时间 : ' + obj.endDate);
+                    var data = {
+                        start: obj.startDate,
+                        end: obj.endDate,
+                        _csrf: token
+                    };
+                    search(data);
+                }
+            });
+
+            $('.order-status').change(function(){
+                var d = $(this).val();
+                var data = {
+                    type: d, 
+                    _csrf: token
+                };
+                search(data);
+            }); 
+            
+            $('.btn-change').click(function(){
+                var $target = $(this);
+                var content = $target.text();
+                var status = '';
+                var statusname = '';
+                if(content=='发布'){
+                    statusname = '下线';
+                    status = 1;
+                }else if(content=='下线'){
+                    statusname = '发布';
+                    status = 2;
+                }
+                var data = {
+                    id: $target.data('id'), 
+                    status: status, 
+                    _csrf: token
+                };
+                $.post('#{adminDir}/usergame/change', data, function(json) {
+                    console.log(json);
+                    if(json.success === true) {
+                        $target.closest('tr').find('td').eq(1).text('已'+content);
+                        $target.text(statusname);
+                    }else{
+                        alert(json.message);
+                    }
+                });
+            });
+        });
+
+        var token = '#{token}';
+        function searchGame(){            
+            var data = {
+                key: $('#key').val(),
+                _csrf: token
+            };
+            search(data);
+            return false;
+        }
+
+        function search(data){
+            data.ptype = 2;
+            var $list = $(".table-striped tbody").empty();
+            $.post('#{adminDir}/usergame/search', data, function(json) {
+                console.log(json);
+                if(json.success === true) {
+                    var tmpl = $('#J_tmpl_comment_item').html();              
+                    var html = Mustache.render(tmpl, json);
+                    $list.append(html);
+                }else{
+                    alert(json.message);
+                }
+            });
+        }
+                

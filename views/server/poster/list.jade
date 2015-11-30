@@ -1,0 +1,111 @@
+extends ../layout
+
+block content
+    .console
+        h2.modal-title.fl-left 海报管理
+        .clearfix    
+
+    div
+        .widget.widget-search.fl-right
+            form.form-group(action='/', onsubmit='return searchPoster();')
+                .form-group
+                    input.form-control(type="text", name="key", id="key", value="", required="required")
+                    button(type="submit").btn.btn-info 搜索
+    .row
+        .col-md-12
+            table.table.table-striped
+                tbody
+                    - each resource in res
+                        tr
+                            td
+                                img(src='/uploaded/files/thumb/#{resource.thumb}')
+                            td
+                                strong #{resource.name}
+                            td
+                                a.btn.btn-default.btn-xs.buy-game(href='#{adminDir}/poster/#{resource.id}/edit') 编辑
+                                &nbsp;
+                                a.btn.btn-danger.btn-xs(href='#{adminDir}/poster/{{id}}/del') 删除
+            
+            if (pageInfo && pageInfo.totalPage > 1)
+                include ../mixin
+                +pagination(pageInfo)
+            
+
+            script#J_tmpl_comment_item(type='x-tmpl-mustache')
+                {{#data}}
+                tr
+                    td
+                        img(src='/uploaded/files/{{thumb}}')
+                    td
+                        strong {{name}}
+                    td
+                        a.btn.btn-danger.btn-xs(href='#{adminDir}/poster/{{id}}/edit') 编辑
+                        &nbsp;
+                        a.btn.btn-danger.btn-xs(href='#{adminDir}/poster/{{id}}/del') 删除
+                {{/data}}            
+
+block foot-js
+    script.
+        var token = '#{token}';
+        function searchPoster(){
+            var $list = $(".table-striped tbody").empty();
+            var data = {
+                key: $('#key').val(),
+                _csrf: token
+            };
+            $.post('#{adminDir}/poster/search', data, function(json) {
+                console.log(json);
+                if(json.success === true) {
+                    var tmpl = $('#J_tmpl_comment_item').html();              
+                    var html = Mustache.render(tmpl, json);
+                    $list.append(html);
+                }else{
+                    alert(json.message);
+                }
+            });
+            return false;
+        }
+
+        $(function(){
+            var $navlist = $('.cms-nav-item');
+            var $lastItem = $navlist.eq(0);            
+            $navlist.click(function(){
+                $lastItem.removeClass('active');
+                $(this).addClass('active');
+                $lastItem = $(this);
+                var $list = $(".table-striped tbody").empty();
+                var data = {
+                    type: $(this).data('id'),
+                    _csrf: token
+                };
+                $.post('#{adminDir}/resource/search', data, function(json) {
+                    console.log(json);
+                    if(json.success === true) {
+                        var tmpl = $('#J_tmpl_comment_item').html();              
+                        var html = Mustache.render(tmpl, json);
+                        $list.append(html);
+                    }else{
+                        alert(json.message);
+                    }
+                });
+                return false;
+            });
+
+            $('.del-cart').click(delResource);            
+        });
+
+        function delResource(){
+            var $item = $(this).parent();             
+            var data = {
+                id: $(this).data('id'),
+                _csrf: token
+            };
+            $.post('#{adminDir}/resource/del', data, function(json) {
+                alert(json.message);
+                if(json.success === true) {                   
+                    $item.remove();
+                }
+            });
+            return false;
+        }
+                

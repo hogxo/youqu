@@ -1,0 +1,205 @@
+extends ../layout
+
+block content
+    #pin-container
+        .profile-photo
+            img.img-circle(src='/assets/server/img/car.png', alt='')
+        .dropdown.settings
+            a.dropdown-toggle(data-toggle='dropdown', href='')
+                | 购物车 
+                span(style='color:red') (#{usercarts.length})
+                i.fa.fa-angle-down
+            ul.dropdown-menu#usercart
+                - each item in usercarts
+                    li
+                        span #{item.game.name}
+                        span.price #{item.game.price}
+                        a.btn.btn-default.btn-xs.del-cart(href='#', data-id='#{item.id}') 删除
+                li
+                    p 共
+                        span.totalcount(style='color:red') #{usercarts.length}
+                        | 种商品 总计金额：
+                        span.totalprice(style='color:red') #{totalprice}
+                        | ¥
+                li
+                    a.btn.btn-danger.btn-xs.btn-balance(href='#') 结算
+
+    div
+        .widget.widget-search.fl-right
+            form.form-group(action='/', onsubmit='return searchGame();')
+                .form-group
+                    input.form-control(type="text", name="key", id="key", value="", required="required")
+                    button(type="submit").btn.btn-info 搜索
+        .cms-nav
+            a.cms-nav-item.active(href='#', data-id='') 全部
+            - each type in categorys
+                a.cms-nav-item(href='#', data-id='#{type.id}') #{type.name}
+    .row
+        .col-md-12
+            table.table.table-striped
+                tbody
+                    - each game in games
+                        tr
+                            td
+                                img(src='/uploaded/files/#{game.thumb}')
+                            td
+                                strong #{game.name}
+                                p #{game.desc}
+                            td
+                                | #{game.type.name}
+                            td
+                                strong #{game.price}
+                            td
+                                a.btn.btn-default.btn-xs.buy-game(href='#', data-id='#{game.id}') 购买
+                                | &nbsp;
+                                a.btn.btn-danger.btn-xs(href='#{adminDir}/game/#{game.id}/try') 试玩
+            
+            if (pageInfo && pageInfo.totalPage > 1)
+                include ../mixin
+                +pagination(pageInfo)
+            
+
+            script#J_tmpl_comment_item(type='x-tmpl-mustache')
+                {{#data}}
+                tr
+                    td
+                        img(src='/uploaded/files/{{thumb}}')
+                    td
+                        strong {{name}}
+                        p {{desc}}
+                    td
+                        | {{type.name}}
+                    td
+                        strong {{price}}
+                    td
+                        a.btn.btn-default.btn-xs(href='#', data-id='{{id}}') 购买
+                        | &nbsp;
+                        a.btn.btn-danger.btn-xs(href='#{adminDir}/game/{{id}}/try') 试玩
+                {{/data}}
+
+            script#J_tmpl_cart_item(type='x-tmpl-mustache')
+                {{#data}}
+                li
+                    span {{game.name}}
+                    span.price {{game.price}}
+                    a.btn.btn-default.btn-xs.del-cart(href='#', data-id='{{id}}') 删除
+                {{/data}}
+
+                li
+                    p 共
+                        span.totalcount(style='color:red') {{data.length}}
+                        | 种商品 总计金额：
+                        span.totalprice(style='color:red') {{totalprice}}
+                        | ¥
+                li
+                    a.btn.btn-danger.btn-xs.btn-balance(href='#') 结算
+
+block foot-js
+    script.
+        var token = '#{token}';
+        function searchGame(){
+            var $list = $(".table-striped tbody").empty();
+            var data = {
+                key: $('#key').val(),
+                _csrf: token
+            };
+            $.post('#{adminDir}/game/search', data, function(json) {
+                console.log(json);
+                if(json.success === true) {
+                    var tmpl = $('#J_tmpl_comment_item').html();              
+                    var html = Mustache.render(tmpl, json);
+                    $list.append(html);
+                }else{
+                    alert(json.message);
+                }
+            });
+            return false;
+        }
+
+        $(function(){
+            var $navlist = $('.cms-nav-item');
+            var $lastItem = $navlist.eq(0);            
+            $navlist.click(function(){
+                $lastItem.removeClass('active');
+                $(this).addClass('active');
+                $lastItem = $(this);
+                var $list = $(".table-striped tbody").empty();
+                var data = {
+                    type: $(this).data('id'),
+                    _csrf: token
+                };
+                $.post('#{adminDir}/game/search', data, function(json) {
+                    console.log(json);
+                    if(json.success === true) {
+                        var tmpl = $('#J_tmpl_comment_item').html();              
+                        var html = Mustache.render(tmpl, json);
+                        $list.append(html);
+                    }else{
+                        alert(json.message);
+                    }
+                });
+                return false;
+            });
+
+            $('.buy-game').click(function(){               
+                var data = {
+                    game: $(this).data('id'),
+                    _csrf: token
+                };
+                $.post('#{adminDir}/game/buy', data, function(json) {
+                    console.log(json);
+                    if(json.success === true) {
+                        var $usercart = $('#usercart').empty();
+
+                        var tmpl = $('#J_tmpl_cart_item').html();              
+                        var html = Mustache.render(tmpl, json);
+                        $usercart.append(html);
+                        $usercart.prev().find('span').text('('+json.data.length+')');
+                        $('.del-cart').click(delCart);
+                    }else{
+                        alert(json.message);
+                    }
+                });
+                return false;
+            });
+            
+            $('.btn-balance').click(function(){
+                var totalprice = Number($('.totalprice').text())              
+                var data = {
+                    games: null,
+                    'totalprice': totalprice,
+                    _csrf: token
+                };
+                $.post('#{adminDir}/usercart/balance', data, function(json) {
+                    console.log(json);
+                    if(json.success === true) {
+                        window.location.href = '#{adminDir}/usercart/'+json.orderid+'/order'
+                    }else{
+                        alert(json.message);
+                    }
+                });
+                return false;
+            });
+            $('.del-cart').click(delCart);            
+        });
+
+        function delCart(){
+            var $item = $(this).parent();             
+            var data = {
+                id: $(this).data('id'),
+                _csrf: token
+            };
+            $.post('#{adminDir}/usercart/del', data, function(json) {
+                alert(json.message);
+                if(json.success === true) {
+                    var totalprice = Number($('.totalprice').text())-Number($item.find('.price').text());
+                    var totalcount = Number($('.totalcount').text())-1;
+
+                    $('.totalcount').text(totalcount);
+                    $('.totalprice').text(totalprice);
+                    $item.remove();
+                }
+            });
+            return false;
+        }
+                

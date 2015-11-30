@@ -1,0 +1,79 @@
+extends layout
+
+block content
+    .console
+        h2.modal-title.fl-left 新游戏
+        a.fl-right(href='#{adminDir}/game') 更多
+        .clearfix
+    .row
+        .col-md-12
+            table.table.table-striped
+                tbody
+                    - each game in games
+                        tr
+                            td
+                                img(src='/uploaded/files/#{game.thumb}')
+                            td
+                                strong #{game.name}
+                                p #{game.desc}
+                            td
+                                | #{game.type.name}
+                            td
+                                strong #{game.price}
+                            td
+                                a.btn.btn-default.btn-xs(href='#', data-id='#{game.id}') 购买
+                                | &nbsp;
+                                a.btn.btn-danger.btn-xs(href='#{adminDir}/game/#{game.id}/try') 试玩
+    
+    .console
+        h2.modal-title 游戏统计
+        #gamechart
+        //canvas#line(data-type="Line", width="600", height="400")
+
+    //script(src='/assets/plugins/chartjs/Chart.min.js')
+    //script.
+        var lineChartData = {
+            labels : ["周一","周二","周三","周四","周五","周六","周日"],
+            datasets : [
+                {
+                    fillColor : "rgba(220,220,220,0.5)",
+                    strokeColor : "rgba(220,220,220,1)",
+                    pointColor : "rgba(220,220,220,1)",
+                    pointStrokeColor : "#fff",
+                    data : [0,200,500,1300,1500]
+                },
+                {
+                    fillColor : "rgba(151,187,205,0.5)",
+                    strokeColor : "rgba(151,187,205,1)",
+                    pointColor : "rgba(151,187,205,1)",
+                    pointStrokeColor : "#fff",
+                    data : [300,700,900,1100,1250]
+                }
+            ]
+            
+        }
+        var myLine = new Chart(document.getElementById("line").getContext("2d")).Line(lineChartData);
+
+    link(rel='stylesheet', href='/assets/plugins/c3Chart/css/c3.css')
+    script(src='/assets/plugins/c3Chart/js/d3-3.5.0.min.js')
+    script(src='/assets/plugins/c3Chart/js/c3.min.js')
+    script.
+        var chart = c3.generate({
+            bindto: '#gamechart',
+            data: {
+                columns: [
+                    ['送出积分', 30, 200, 100, 400, 150, 250, 70],
+                    ['游戏次数', 130, 100, 140, 200, 150, 50, 300],
+                    ['游戏人数', 130, 100, 140, 200, 150, 50, 300],
+                    ['新用户', 130, 100, 140, 200, 150, 50, 300],
+                    ['分享次数', 130, 100, 140, 200, 150, 50, 300]
+                ],
+                type: 'spline'
+            },
+            axis: {
+                x: {
+                    type: 'category',
+                    categories: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+                }
+            }
+        });

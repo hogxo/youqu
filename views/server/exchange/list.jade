@@ -1,0 +1,58 @@
+extends ../layout
+
+block content
+    .console
+        h2.modal-title.fl-left 兑换项管理
+        a.btn.btn-info.fl-right(href='#{adminDir}/user/add') 添加兑换项
+        .clearfix    
+
+    .row
+        .col-md-12
+            table.table.table-striped
+                tbody
+                    - each resource in res
+                        tr
+                            td
+                                strong #{resource.integral}
+                            td
+                                p
+                                    img(src='/uploaded/files/thumb/#{resource.thumb}', width="50")
+                                    span #{resource.name}
+                            td
+                                p #{resource.limit_times}
+                            td
+                                p #{resource.ex_times}
+                            td
+                                a.btn.btn-default.btn-xs.buy-game(href='#{adminDir}/exchange/#{resource.id}/edit') 编辑
+                                &nbsp;
+                                a.btn.btn-danger.btn-xs(href='#', data-id='#{resource.id}') 停用
+                                &nbsp;
+                                a.btn.btn-danger.btn-xs.del-client(href='#', data-id='#{resource.id}') 删除
+            
+            if (pageInfo && pageInfo.totalPage > 1)
+                include ../mixin
+                +pagination(pageInfo)
+
+
+block foot-js
+    script.
+        var token = '#{token}';
+        $(function(){            
+            $('.del-client').click(delResource);            
+        });
+
+        function delResource(){
+            var $item = $(this).parent();             
+            var data = {
+                id: $(this).data('id'),
+                _csrf: token
+            };
+            $.post('#{adminDir}/exchange/del', data, function(json) {
+                alert(json.message);
+                if(json.success === true) {                   
+                    $item.remove();
+                }
+            });
+            return false;
+        }
+                

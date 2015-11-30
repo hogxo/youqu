@@ -1,0 +1,73 @@
+extends layout
+
+block content
+    .container.content
+        .row
+            if (key) 
+                .col-md-12
+                    .search-area
+                        | 搜索 
+                        strong "#{key}" 
+                        | 共有 
+                        strong #{total} 
+                        | 条结果
+            .col-md-8
+                each content in contents
+                    article.post
+                        header.entry-header
+                            .entry-thumbnail
+                                if (content.gallery && content.gallery.length > 0)
+                                    img.img-responsive(src='#{content.gallery[0].url}')
+                        .post-content
+                            h2.entry-title
+                                a(href='/content/#{content._id}') #{content.title}
+                            .entry-meta
+                                ul
+                                    if (content.author)
+                                        li.author
+                                            i.fa.fa-user
+                                            | #{content.author.name}
+                                    li.publish-date
+                                        i.fa.fa-calendar
+                                        time 发表于：#{moment(content.created).format('YYYY-MM-DD HH:mm:ss')}
+                                    //li.tag
+                                    li
+                                        i.fa.fa-comment-o
+                                        span 评论:#{content.comments && content.comments.length}
+                                    li
+                                        span 访客:#{content.visits}
+                            .entry-summary
+                                - var text = strip(content.content).substr(0, 100);
+                                p #{text}
+
+                .text-center
+                    if (pageInfo && pageInfo.totalPage > 1)
+                        include ./mixin
+                        +pagination(pageInfo)
+            .col-md-4
+                .widget-area
+                    .widget.widget-search
+                        form.form-group(action='/', method='get')
+                            //input(type='hidden', name='_csrf', value='#{token}')
+                            .form-group
+                                input.form-control(type="text", name="key", id="key", value="", required="required")
+                                button(type="submit").btn.btn-info 搜索
+                    .widget
+                        h3.widget_title 最新内容
+                        ul.latest-posts
+                            each item in newest
+                                li
+                                    a(href='/content/#{item.id}') #{item.title}
+                    .widget
+                        h3.widget_title 最热内容
+                        ul.latest-posts
+                            each item in hotest
+                                li
+                                    a(href='/content/#{item.id}') #{item.title}
+block foot-js
+    script.
+        var token = '#{token}';
+        
+        
+        
+                

@@ -1,0 +1,140 @@
+extends ../layout
+block head-css
+    link(rel='stylesheet', href='/assets/plugins/upload/css/jquery.fileupload.css')
+block content
+    .row
+        .col-md-12
+            form(action='', method='post')
+                .form-group
+                    label 标题
+                    input.form-control(name='title', value='#{content.title}')
+                .form-group
+                    label 图集
+                    .gallery#J_gallery
+                        if (content.gallery)
+                            - each image in content.gallery
+                                .gallery-item
+                                    img.gallery-image(src='#{image.md_url || image.url}')
+                                    input(type='hidden', name='gallery[]', value='#{image._id}')
+                                    a.gallery-remove.J_del(href='#{adminDir}/file/#{image._id}/del')
+                                        span.fa.fa-times-circle
+                    span.btn.btn-success.fileinput-button
+                        i.glyphicon.glyphicon-plus
+                        span 添加文件
+                        input#fileupload(type='file', name='files[]', multiple='multiple')
+                    #J_files
+                    div#progress.progress
+                        div.progress-bar.progress-bar-success
+                    #J_preview.preview
+                       
+                .form-group
+                    label 分类
+                    select.form-control.input-sm(name='category')
+                        option(value='') 请选择
+                        - each category in categorys
+                            if ((category._id + '') === (content.category + ''))
+                                option(value='#{category._id}', selected)
+                                    | #{category.name}
+                            else
+                                option(value='#{category._id}')
+                                    | #{category.name}
+                .form-group
+                    label 内容
+                    textarea.form-control(name='content', rows='20') #{content.content}
+                .form-group
+                    label 标签
+                    div
+                        if (tags && tags.length > 0)
+                            select#J_select_tags(data-placeholder='请选择标签', name='tags[]', multiple, style='width: 500px;')
+                                each tag in tags
+                                    - var mytags = content.tags && content.tags.map(function(item) {return item.name;});
+                                    if (mytags.indexOf(tag.name) > -1)
+                                        option(value='#{tag.id}', selected) #{tag.name}
+                                    else 
+                                        option(value='#{tag.id}') #{tag.name}
+                .help-block
+                    span.btn.btn-info.btn-xs 新增标签
+                input(type='hidden', name='_csrf', value='#{token}')
+                button.btn.btn-primary(type='submit') 提交
+    script#J_tmpl_gallery_item(type='x-tmpl-mustache')
+        .gallery-item
+            img.gallery-image(src='{{url}}')
+            input(type='hidden', name='gallery[]', value='{{id}}')
+            a.gallery-remove.J_del(href='')
+                span.fa.fa-times-circle
+
+
+block foot-js
+    script(src='/assets/plugins/upload/js/vendor/jquery.ui.widget.js')
+    script(src='/assets/plugins/load-image/js/load-image.min.js')
+    //script(src='/assets/server/js/vendor/canvas-to-blob.min.js')
+    script(src='/assets/plugins/upload/js/jquery.iframe-transport.js')
+    script(src='/assets/plugins/upload/js/jquery.fileupload.js')
+    <script src="/assets/plugins/upload/js/jquery.fileupload-process.js"></script>
+    <script src="/assets/plugins/upload/js/jquery.fileupload-image.js"></script>
+    <script src="/assets/plugins/upload/js/jquery.fileupload-audio.js"></script>
+    <script src="/assets/plugins/upload/js/jquery.fileupload-video.js"></script>
+    <script src="/assets/plugins/upload/js/jquery.fileupload-validate.js"></script>
+
+    script.
+        $('#J_select_tags').chosen({max_selected_options: 5, no_results_text: '没有匹配到'})
+        $(function () {
+            $('#fileupload').fileupload({
+                //url: '/upload',
+                url: '/admin/file/add',
+                formData: {
+                    _csrf: '#{token}'
+                },
+                dataType: 'json',
+                progressall: function(e, data) {
+                    //console.log(e, data);
+                    var progress = parseInt(data.loaded / data.total * 100, 10);
+                    $('#progress .progress-bar').css(
+                        'width',
+                        progress + '%'
+                    ).text(progress + '%');
+                },
+                done: function (e, data) {
+                    $('#progress .progress-bar').addClass('progress-bar-success').css(
+                        'width',
+                        100 + '%'
+                    ).text('100%');
+                    $.each(data.result.files, function (index, file) {
+                        var tmpl = $('#J_tmpl_gallery_item').html();
+                        var html = Mustache.render(tmpl, {
+                            url: file.url,
+                            id: file._id
+                        });
+                        $('#J_gallery').append(html);
+                    });
+                }
+            });
+            //删除图集
+            $('#J_gallery').on('click', '.J_del', function(e) {
+                e.preventDefault();
+                var $this = $(this);
+                var $item = $this.closest('.gallery-item');
+                var confirm = BootstrapDialog.confirm('<p>确定删除图片吗</p><label><input type="checkbox"/> 同时删除原图</label>', function(val) {
+                    var $input = confirm.$modal.find('input');
+                    var checked = $input[0].checked;
+                    if(val) {
+                        if(checked) {
+                            var id = $this.siblings('input').val();
+                            var url = '/admin/file/' + id + '/del';
+                            $.post(url, {
+                                _csrf: '#{token}'
+                            }, function(json) {
+                                if(json.success) {
+                                    $item.remove();
+                                } else{
+                                    BootstrapDialog.alert('删除失败');
+                                }
+                            });
+                        } else {
+                            $item.remove();
+                        }
+                        
+                    }
+                });
+            });
+        });

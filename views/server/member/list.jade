@@ -1,0 +1,139 @@
+extends ../layout
+
+block content
+    .row
+        .col-md-12            
+            .lists
+                h2 会员列表
+                .panel-heading
+                    .filter-option
+                        label 状态
+                        select.order-status
+                            option(value="") 全部
+                            option(value="0") 停用
+                            option(value="1") 启用
+                    
+                    .filter-option
+                        label.fl-left 注册时间
+
+                        .ta_date#div_date1
+                            span.date_title#date1
+                            a.opt_sel#input_trigger1(href="#")
+                                i.i_orderd
+                    .widget.widget-search.fl-right
+                        form(action='/', onsubmit='return searchGame();')
+                            input.form-control(type="text", name="key", id="key", value="", required="required", placeholder="用户名")
+                            button(type="submit").btn.btn-info 搜索
+
+                table.table.table-striped
+                    thead
+                        tr
+                            th 微信号
+                            th 昵称
+                            th 注册日期
+                            th 总积分
+                            th 总消费
+                            th 状态
+                            th 操作
+                    tbody
+                        - each item in datas
+                            tr
+                                td #{item.wechaname}
+                                td #{item.truename}
+                                td #{moment(item.created).format('LLL')}
+                                td #{item.integral}
+                                td #{item.consume}
+                                td #{item.statusname}
+                                td 
+                                    a.btn.btn-danger.btn-xs.pay-order(href='#{adminDir}/member/#{item.id}/one') 修改
+                                    br
+                                    a.btn.btn-danger.btn-xs(href='#', data-id='#{item.id}') 停用
+                                    br
+                                    a.btn.btn-danger.btn-xs(href='#', data-id='#{item.id}') 删除
+                        
+                if (pageInfo && pageInfo.totalPage > 1)
+                    include ../mixin
+                    +pagination(pageInfo)
+
+block foot-js
+    link(rel='stylesheet', href='/assets/plugins/pickerDateRange/css/dateRange.css')
+    //link(rel='stylesheet', href='/assets/plugins/pickerDateRange/css/monthPicker.css')
+    script(src='/assets/plugins/pickerDateRange/js/dateRange.js')
+    //script(src='/assets/plugins/pickerDateRange/js/monthPicker.js')
+    script#J_tmpl_comment_item(type='x-tmpl-mustache')
+        {{#data}}
+        tr
+            td {{wechaname}}
+            td {{truename}}
+            td {{created}}
+            td {{integral}}
+            td {{consume}}
+            td {{statusname}}
+            td 
+                a.btn.btn-danger.btn-xs.pay-order(href='#{adminDir}/member/{{id}}/one') 修改
+                br
+                a.btn.btn-danger.btn-xs(href='#', data-id='{{id}}') 停用
+                br
+                a.btn.btn-danger.btn-xs(href='#', data-id='{{id}}') 删除
+        {{/data}}
+
+    script.
+        var token = '#{token}';
+
+        $(function(){
+            var dateRange1 = new pickerDateRange('date1', {
+                isTodayValid : true,
+                startDate : '2015-09-01',
+                endDate : '2015-09-31',
+                needCompare : false,
+                defaultText : ' 至 ',
+                autoSubmit : true,
+                inputTrigger : 'input_trigger1',
+                theme : 'ta',
+                success : function(obj) {
+                    //- console.log('开始时间 : ' + obj.startDate + '<br/>结束时间 : ' + obj.endDate);
+                    var data = {
+                        start: obj.startDate,
+                        end: obj.endDate,
+                        _csrf: token
+                    };
+                    search(data);
+                }
+            });
+
+            $('.order-status').change(function(){
+                var d = $(this).val();
+                var data = {
+                    type: d, 
+                    _csrf: token
+                };
+                search(data);
+            }); 
+       
+        });
+
+        var token = '#{token}';
+        function searchGame(){            
+            var data = {
+                key: $('#key').val(),
+                _csrf: token
+            };
+            search(data);
+            return false;
+        }
+
+        function search(data){
+            data.ptype = 1;
+            var $list = $(".table-striped tbody").empty();
+            $.post('#{adminDir}/member/search', data, function(json) {
+                console.log(json);
+                if(json.success === true) {
+                    var tmpl = $('#J_tmpl_comment_item').html();              
+                    var html = Mustache.render(tmpl, json);
+                    $list.append(html);
+                }else{
+                    alert(json.message);
+                }
+            });
+        }
+                

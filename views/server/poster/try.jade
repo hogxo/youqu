@@ -1,0 +1,16 @@
+extends ../layout
+block head-css
+block content
+    .row
+        .col-md-12
+            .lists
+                h2 #{content.name}
+                .content 
+                    | !{md(content.desc)}
+                
+                .samsung-render
+                    iframe(src="/uploaded/games/#{content.source}", id="myiframe", width="320", height="406", frameborder="0", style="overflow-x:hidden;")
+
+                h3 实时预览 (
+                    span(style="color:#c30")注意：只有在手机上才能获得最佳浏览效果，电脑浏览并不一定是最终显示效果)                               
+    

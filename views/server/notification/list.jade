@@ -1,0 +1,231 @@
+extends ../layout
+block head-css
+    link(rel='stylesheet', href='/assets/plugins/select2/dist/css/select2.min.css')
+block content
+    .row
+        .col-md-12
+            a.btn.btn-info.J_post(href='#{adminDir}/notification/add') 发私信
+            table.table.table-striped
+                thead
+                    tr
+                        th 内容
+                        th 来自
+                        th 发给
+                        th 时间
+                        th 操作
+                tbody
+                    - each notification in notifications
+                        tr
+                            td
+                                | #{notification.content}
+                            td #{notification.from.username}
+                            td #{notification.to.username}
+                            td
+                                | #{moment(notification.created).format('LLL')}
+                            td
+                                a.btn.btn-danger.btn-xs.J_del(href='#{adminDir}/notification/#{notification.id}/del') 删除
+            if (pageInfo && pageInfo.totalPage > 1)
+                include ../mixin
+                +pagination(pageInfo)
+    script#J_tmpl_add(type='x-tmpl-mustache')
+        .form-group
+            label 收信人
+            //input.form-control(name='kw')
+            select.form-control.J_to_users(name='kw', style='width: 60%', multiple='multiple')
+                
+        .form-group
+            label 内容
+            textarea.form-control(rows='4')
+block foot-js
+    script(src='/assets/plugins/select2/dist/js/select2.js')
+    script.
+        var user = !{JSON.stringify(User)};
+        var token = '#{token}';
+        Messenger.options = {
+            extraClasses: 'messenger-fixed messenger-on-bottom messenger-on-right',
+            theme: 'flat'
+        };
+        $(document).on('click', '.J_post', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            var url = $this.attr('href');
+            var request = function(to, content, dialog) {
+                $.post(url, {
+                    _csrf: token,
+                    from: user._id,
+                    to: to,
+                    content: content
+                }, function(json) {
+                    console.log(json);
+                    dialog.close();
+                    BootstrapDialog.alert('发送成功');
+                });
+            };
+            
+            var $dialog = BootstrapDialog.show({
+                title: '发送私信',
+                message: $('<div/>').append($('#J_tmpl_add').html()),
+                buttons: [
+                    {
+                        label: '发送',
+                        cssClass: 'btn-primary',
+                        action: function(dialog) {
+                            console.log(dialog)
+                            var to = dialog.$modalBody.find('.J_to_users').val();
+                            var content = dialog.$modalBody.find('textarea').val();
+                            request(to, content, dialog);
+                        }
+                    },
+                    {
+                        label: '取消',
+                        action: function(dialogItself) {
+                            dialogItself.close();
+                        }
+                    }
+                ]
+            });
+            //- $dialog.$modalBody.find('input').AutoComplete({
+            //-     'data': '#{core.translateAdminDir("/user/query"))',
+            //-     'ajaxType': 'GET',
+            //-     'ajaxDataType': 'json',
+            //-     'width': 'auto',
+            //-     afterSelectedHandler: function(data) {
+            //-         console.log(data)
+            //-     },
+            //-     'onerror': function(msg){alert(msg);}
+            //- });
+            $dialog.$modalBody.find(".J_to_users").select2({
+                ajax: {
+                    //url: "https://api.github.com/search/repositories",
+                    url: '#{core.translateAdminDir("/user/query"))',
+                    //dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term, // search term
+                            page: params.page
+                        };
+                    },
+                    processResults: function(data, params) {
+                        // parse the results into the format expected by Select2
+                        // since we are using custom formatting functions we do not need to
+                        // alter the remote JSON data, except to indicate that infinite
+                        // scrolling can be used
+                        params.page = params.page || 1;
+                        data.items.map(function(item) {
+                            item.id = item._id;
+                            return item;
+                        });
+                        console.log(data.items);
+                        return {
+                            results: data.items,
+                            pagination: {
+                                more: (params.page * 30) < data.total_count
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                escapeMarkup: function(markup) {
+                    return markup;
+                },
+                minimumInputLength: 1,
+                templateResult: function (repo) {
+                    if (repo.loading) return repo.text;
+
+                    var markup = '<div class="clearfix">' +
+                        '<div clas="col-sm-10">' +
+                        '<div class="clearfix">' +
+                        '<div class="col-sm-6">' + repo.username + '</div>' +
+                        '</div>';
+
+                    markup += '</div></div>';
+
+                    return markup;
+                },
+                templateSelection: function (repo) {
+                    return repo.username || repo.text;
+                }
+            });
+            //- $dialog.$modalBody.find(".J_to_users").select2({
+            //-     ajax: {
+            //-         url: '#{core.translateAdminDir("/user/query"))',
+            //-         //dataType: 'json',
+            //-         delay: 250,
+            //-         data: function(params) {
+            //-             return {
+            //-                 q: params.term, // search term
+            //-                 page: params.page
+            //-             };
+            //-         },
+            //-         processResults: function(data, page) {
+            //-             params.page = params.page || 1;
+            //-             data.items.map(function(item) {
+            //-                 item.id = item._id;
+            //-                 return item;
+            //-             });
+            //-             return {
+            //-                 results: data.items,
+            //-                 pagination: {
+            //-                     more: (params.page * 30) < data.total_count
+            //-                 }
+            //-             };
+            //-         },
+            //-         cache: true
+            //-     },
+            //-     escapeMarkup: function(markup) {
+            //-         return markup;
+            //-     },
+            //-     minimumInputLength: 1,
+            //-     templateResult: function(repo) {
+            //-         if (repo.loading) return repo.text;
+            //-         var markup = '<div class="clearfix">' +
+            //-             '<div clas="col-sm-10">' +
+            //-             '<div class="col-sm-3">' + repo.name + '</div>' +
+            //-             '<div class="col-sm-6"><i class="fa fa-code-fork"></i> ' + repo.email + '</div>' +
+            //-             '<div class="col-sm-2"><i class="fa fa-star"></i> ' + repo.gender + '</div>' +
+            //-             '</div>';
+            //-         markup += '</div>';
+            //-         return markup;
+            //-     },
+            //-     templateSelection: function(repo) { // omitted for brevity, see the source of this page
+            //-         return repo._id || repo.username;
+            //-     }
+            //- });
+        });
+
+        $(document).on('click', '.J_del', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            var $tr = $this.closest('tr');
+            var url = $this.attr('href');
+            var messenger = Messenger().post("处理中...");
+            $.post(url, {_csrf: token}, function(json) {
+                console.log(json);
+                var status = json.status;
+                if(status === true) {
+                    //- Messenger().post({
+                    //-     message: '删除成功',
+                    //-     hideAfter: 3,
+                    //-     type: 'success'
+                    //- });
+                    messenger.update({
+                        message: '删除成功',
+                        hideAfter: 3,
+                        type: 'success'
+                    });
+                    $tr.remove();
+                } else {
+                    //- Messenger().post({
+                    //-     message: '删除失败',
+                    //-     hideAfter: 3,
+                    //-     type: 'error'
+                    //- });
+                    messenger.update({
+                        message: '删除失败',
+                        hideAfter: 3,
+                        type: 'error'
+                    });
+                }
+            })
+        });

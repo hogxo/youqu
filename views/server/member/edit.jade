@@ -1,0 +1,218 @@
+extends ../layout
+block head-css
+block content
+    .row
+        .col-md-12
+            .lists.fl-left(style="width:370px;")
+                h2 #{content.game.name}
+                .content 
+                    | !{md(content.game.desc)}
+                
+                .samsung-render
+                    iframe(src="/uploaded/games/#{content.game.source}", id="myiframe", width="320", height="406", frameborder="0", style="overflow-x:hidden;")
+
+                p 实时预览 (
+                    span(style="color:#c30")注意：只有在手机上才能获得最佳浏览效果，电脑浏览并不一定是最终显示效果)                               
+            
+            .tabPanel.fl-left(style="width:")
+                ul#tags
+                    li.selectTag
+                        a(onclick="selectTag('tagContent0',this)", href="javascript:void(0)") 资源替换
+                    li
+                        a(onclick="selectTag('tagContent1',this)", href="javascript:void(0)") 游戏配置
+                    li
+                        a(onclick="selectTag('tagContent2',this)", href="javascript:void(0)") 奖励配置
+                    li
+                        a(onclick="selectTag('tagContent3',this)", href="javascript:void(0)") 发布
+
+                
+                #tagContent
+                    #tagContent0.tagContent.selectTag
+                        .modifyItem
+                            p.md-title 图片
+                            ul.md-list.pic-list
+                        .modifyItem
+                            p.md-title 文字
+                            ul.md-list.txt-list
+                        .modifyItem
+                            p.md-title 音频
+                            ul.md-list.audio-list
+
+                    #tagContent1.tagContent                        
+                        .modifyItem
+                            p 添加分享按钮
+                            p
+                                input(type="radio", name="share")
+                                label 简单提示
+                                input(type="radio", name="share")
+                                label 自定义
+
+                        .modifyItem
+                            p 添加背景音乐
+                            p
+                                input(type="text", name="bjsound") 
+                                input(type="button", value="更换") 
+
+                    #tagContent2.tagContent                        
+                        .modifyItem    
+                            table#tb-config(width="100%", border="0", cellspacing="0", cellpadding="0")
+                            .clearfix
+
+                .tool-bar.mt-10
+                    a.publish 发布          
+                    a.saveModify 保存修改
+
+
+block foot-js
+    script.
+        function selectTag(showContent,selfObj){
+            // 操作标签
+            var tag = document.getElementById("tags").getElementsByTagName("li");
+            var taglength = tag.length;
+            for(i=0; i<taglength; i++){
+                tag[i].className = "";
+            }
+            selfObj.parentNode.className = "selectTag";
+            // 操作内容
+            for(i=0; j=document.getElementById("tagContent"+i); i++){
+                j.style.display = "none";
+            }
+            document.getElementById(showContent).style.display = "block";
+        }
+        
+        var path = "/uploaded/config/#{content.config}";
+        var gameData;
+        $.getJSON(path,function(data){ 
+            gameData = data;
+            var rlist = gameData.resources;
+            var clist = gameData.config;
+            var $piclist = $('.pic-list').empty();
+            var $txtlist = $('.txt-list').empty();
+            var $audiolist = $('.audio-list').empty();
+            $(rlist).each(function(){
+                var rtype = this.type;
+                $(this.item).each(function(){
+                    var $item = $('<li />');
+                    if(rtype=="pic"){
+                        var $img = $('<div class="fl" />')
+                        .append($('<img class="fileto" id="field'+this.id+'" data-old="'+this.value+'" src="'+this.value+'" width="60" height="60" />'));
+                        var $label = $('<div class="fl ml-10" />')
+                        .append($('<p>'+this.name+'</p>'))
+                        .append($('<p>'+this.size+'</p>'))
+                        .append($('<p>必须保持尺寸</p>'));
+                        var $ctrl = $('<div class="fr" />')
+                        .append($('<a href="#" class="upload">更换图片</a>'))
+                        .append($('<a href="#" class="restore ml-5">还原</a>'));
+                        var $clr = $('<div class="clearfix" />');
+                        
+                        $item.append($img)
+                        .append($label)
+                        .append($ctrl)
+                        .append($clr)
+                        .appendTo($piclist);
+                    }else if(rtype=="text"){
+                        var $label = $('<div class="fl" />')
+                        .append($('<span>'+this.name+'</span>'))
+                        .append($('<span class="md-txt ml-10" id="field'+this.id+'" data-old="'+this.value+'">'+this.value+'</span>'));
+                        var $ctrl = $('<div class="fr" />')
+                        .append($('<input type="text" class="replace" />'))                         
+                        .append($('<a href="#" class="changetxt ml-5">更换文字</a>'))
+                        .append($('<a href="#" class="restoretxt ml-5">还原</a>'));
+                        var $clr = $('<div class="clearfix" />');
+                        
+                        $item.append($label)
+                        .append($ctrl)
+                        .append($clr)
+                        .appendTo($txtlist);                            
+                    }else if(rtype=="audio"){
+                        var $img = $('<div class="fl aLabel" />')
+                        .append($('<span>'+this.name+'</span>'));
+                        var $label = $('<div class="fl" />')
+                        .append($('<audio class="fileto" id="field'+this.id+'" data-old="'+this.value+'" src="'+this.value+'" controls="controls">您的浏览器不支持音频播放.</audio>'));
+                        var $ctrl = $('<div class="fr" />')
+                        .append($('<a href="#" class="upload">更换音频</a>'))
+                        .append($('<a href="#" class="restore ml-5">还原</a>'));
+                        var $clr = $('<div class="clearfix" />');
+                        
+                        $item.append($img)
+                        .append($label)
+                        .append($ctrl)
+                        .append($clr)
+                        .appendTo($audiolist);
+                    }
+                });
+            });
+            
+            var $cfglist = $('#tb-config').empty();
+            $(clist).each(function(){
+                $item = $('<tr />')
+                .append($('<td class="tr">'+this.name+'</td>'))
+                .append($('<td><input type="text" id="field'+this.id+'" class="replace" value="'+this.intergal+'" /><span class="ml-5">积分</span><span class="f-red">*</span></td>'));
+                $cfglist.append($item);
+            });
+            
+            KindEditor.ready(function(K){
+                var editor = K.editor({
+                    allowFileManager:true
+                });
+                K('.upload').click(function() {
+                    var target = $(this).parent().parent().find('.fileto');
+                    editor.loadPlugin('image', function() {
+                        editor.plugin.imageDialog({
+                            fileUrl : target.attr('src'),
+                            clickFn : function(url, title) {
+                                if(url.indexOf("http") > -1){
+                                    target.attr('src', url)
+                                }else{
+                                    target.attr('src', "{lanrain::C('site_url')}"+url)
+                                }
+                                editor.hideDialog();
+                            }
+                        });
+                    });
+                    return false;
+                });
+            });
+            
+            $('.changetxt').on('click', function(){
+                var content = $(this).prev().val();
+                $(this).parent().parent().find('.md-txt').text(content);
+                return false;
+            });
+            
+            $('.restoretxt').on('click', function(){
+                var $mditem = $(this).parent().parent().find('.md-txt');
+                $mditem.text($mditem.data('old'));
+                return false;
+            });
+            
+            $('.restore').on('click', function(){
+                var $mditem = $(this).parent().parent().find('.fileto');
+                $mditem.attr('src', $mditem.data('old'));
+                return false;
+            });
+        });
+        
+        $('.saveModify').on('click', function(){
+            var rlist = gameData.resources;
+            var clist = gameData.config;
+            $(rlist).each(function(key){
+                var rtype = this.type;
+                $(this.item).each(function(code){
+                    if(rtype=="pic"||rtype=="audio"){
+                        gameData.resources[key].item[code].value = $('#field'+this.id).attr('src');
+                    }else{
+                        gameData.resources[key].item[code].value = $('#field'+this.id).text();
+                    }
+                });
+            });
+            $(clist).each(function(key){
+                gameData.config[key].intergal = $('#field'+this.id).val();
+            });
+            $.post("{lanrain::U('Tmpls/saveGame',array('id'=>$id))}", {'data':JSON.stringify(gameData)},
+               function(data){
+                 alert(data);
+                 window.location.reload();
+            });
+            return false;
+        });

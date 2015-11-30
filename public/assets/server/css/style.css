@@ -1,0 +1,143 @@
+body{
+    font-family: '微软雅黑' Monaco;
+}
+.preview img{
+    max-width: 200px;
+    max-height: 200px;
+}
+a.btn-danger{
+    color: #fff;
+}
+.gallery{
+    padding-bottom: 15px;
+}
+.gallery:after{
+    content: '';
+    clear: both;
+    display: table;
+}
+.gallery-item{
+    width: 200px;
+    height: 200px;
+    background-color: #f2f2f2;
+    background-size: cover;
+    float: left;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    text-align: center;
+    border: 2px solid #fff;
+    position: relative;
+    display: -webkit-flex;
+    -webkit-flex-direction: row;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+}
+.gallery-item .file-holder{
+    font-size: 100px;
+}
+.gallery-item img{
+    max-width: 100%;
+    max-height: 100%;
+}
+.gallery-remove{
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    font-size: 24px;
+    line-height: 0;
+    color: #000 !important;
+}
+.media-list{
+    border-left: 4px solid #eee;
+    padding: 0px 15px;
+    margin: 10px 0;
+}
+.cms-nav-item{
+    position: relative;
+    display: inline-block;
+    padding: 10px;
+    font-weight: 500;
+    color: #cdddeb;
+}
+.cms-nav-item.active{
+    color: #444;
+}
+.cms-nav-item.active:after{
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 0;
+    margin-left: -5px;
+    vertical-align: middle;
+    content: " ";
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid;
+    border-left: 5px solid transparent;
+}
+
+.widget-search{
+    position: relative;
+}
+.widget-search .form-control{
+    border-radius: 0;
+    box-shadow: none;
+    outline: none;
+    height: 35px;
+}
+.widget-search .btn{
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 35px;
+    border-radius: 0;
+}
+
+#pin-container{position: absolute; right: 190px; top:30px;}
+.profile-photo, .settings{display: inline-block;}
+#usercart{min-width: 250px;}
+#usercart>li>*{display:inline-block;}
+#usercart>li>span{margin-right: 10px;}
+.btn-balance{color: #fff!important;float: right;}
+
+.pay-type a{margin-right: 10px;}
+.game-item span{margin-left: 10px;}
+
+.filter-option>label, .filter-option>select{line-height: 36px;margin-bottom: 0;}
+#div_date1{margin-left: 5px;margin-top: 2px;}
+.panel-heading{overflow: auto;}
+.filter-option{float: left;margin-right: 10px;}
+
+.fl-left{float: left;}
+.fl-right{float:right;}
+.samsung-render{background:url(../img/samsung-render.jpg) no-repeat; width:368px; height:auto; padding:146px 0 0 24px;}
+
+.tagContent{ margin-top: 0;background-color: #EEEEEE;}
+
+#tags {
+    MARGIN: 15px 0 0 0; PADDING-TOP: 0px; HEIGHT: 40px
+}
+#tags LI {
+    BACKGROUND: url(../images/img/tagleft.gif) no-repeat left bottom; FLOAT: left; MARGIN-RIGHT: 3px; LIST-STYLE-TYPE: none; HEIGHT: 40px
+}
+#tags LI A {
+    PADDING:0 20px; BACKGROUND: url(../images/img/tagright.gif) no-repeat right bottom; FLOAT: left; COLOR: #999; LINE-HEIGHT: 40px; HEIGHT: 40px; TEXT-DECORATION: none; font-size:16px;
+}
+#tags LI.emptyTag {
+    BACKGROUND: none transparent scroll repeat 0% 0%; WIDTH: 4px
+}
+#tags LI.selectTag {
+    BACKGROUND-POSITION: left top; MARGIN-BOTTOM: -2px; POSITION: relative; HEIGHT: 40px
+}
+#tags LI.selectTag A {
+    BACKGROUND-POSITION: right top; COLOR: #000; LINE-HEIGHT: 40px; HEIGHT: 40px
+}
+#tagContent {
+    display:block
+}
+.tagContent {
+    DISPLAY: none;
+}
+#tagContent DIV.selectTag {
+    DISPLAY: block
+}

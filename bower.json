@@ -1,0 +1,12 @@
+{
+  "name": "youqu",
+  "version": "0.0.0",
+  "homepage": "https://www.youqu.com/admin",
+  "authors": [
+    "hogxo <12901113@qq.com>"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "select2": "~4.0.0"
+  }
+}

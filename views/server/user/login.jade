@@ -1,0 +1,72 @@
+extends ../layout-blank
+
+block content
+    section#login-container
+            .row
+                #login-wrapper.col-md-3
+                    .panel.panel-primary
+                        .panel-heading
+                            h3.panel-title
+                                | 游趣登录
+                        .panel-body
+                            form.form-horizontal(role='form', action='', method='post', onsubmit="return reg.checkfrm();")
+                                .form-group
+                                    .col-md-12
+                                        input#email.form-control(type='text', name='username', placeholder='用户名', autofocus)
+                                        i.fa.fa-user
+                                .form-group
+                                    .col-md-12
+                                        input#password.form-control(type='password', name='password', placeholder='密码')
+                                        i.fa.fa-lock
+                                        a.help-block(href='#{adminDir}/user/forget') 忘记密码?
+                                .form-group
+                                    .col-md-12
+                                        input#verifycode.form-control(type='text', name='verifycode', placeholder='验证码', onchange="reg.checkCcapImg()")
+                                        input#ccapimgstatus(type='hidden', name='ccapimgstatus', value='0')
+                                        i.fa.fa-lock
+                                        img(src='#{adminDir}/user/ccapimg', height='50')
+                                .form-group
+                                    .col-md-12
+                                        input(type='hidden', name='_csrf', value='#{token}')
+                                        button.btn.btn-primary.btn-block(type='submit') 登录
+                                        hr
+                                        a.btn.btn-default.btn-block(href='#{adminDir}/user/register') 还不是用户? 注册
+
+        script.
+            var reg ={
+                checkfrm: function(){
+                    var username = $('#email').val();
+                    var pwd = $('#password').val();
+                    var ccapimgstatus= $('#ccapimgstatus').val();
+                    if(username == ""){
+                        alert('用户名不能为空');
+                        return false;
+                    }
+                    if (pwd == "") {
+                        alert('密码不能为空');
+                        return false;
+                    }
+                    if (ccapimgstatus == "0"){
+                        alert('验证码不正确');
+                        return false;
+                    }
+                    return true;
+                },
+                checkCcapImg: function() {
+                    var ccapimgtxt = $('#verifycode').val();
+                    $.ajax({
+                        'url': '#{adminDir}/user/checkccapimg',
+                        'type':'get',
+                        'data':{ccapimgtxt:ccapimgtxt},
+                        'datatype':'html',
+                        'error':function(msg){
+                            
+                        },
+                        'success':function(msg){
+                            if(msg=='1'){
+                                $('#ccapimgstatus').val('1');
+                            }
+                        }
+                    });
+                }
+            }

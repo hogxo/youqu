@@ -1,0 +1,138 @@
+extends ../layout
+
+block content
+    .row
+        .col-md-12
+            .lists
+                h1 我的购物车
+                if (usercarts.length>0)
+                    table.table.table-striped
+                        thead
+                            tr
+                                th 
+                                    input.select-all(type="checkbox")
+                                    | 全选 
+                                th 游戏名
+                                th 价格
+                                th 操作
+                        tbody
+                            - each item in usercarts
+                                tr
+                                    td 
+                                        input.select-game(type="checkbox", data-id="#{item.id}")
+                                    td
+                                        img(src='/uploaded/files/#{item.game.thumb}')
+                                        span #{item.game.name}
+                                    td #{item.game.price}
+                                    td 
+                                        a.btn.btn-default.btn-xs.del-cart(href='#', data-id='#{item.id}') 删除
+                            tr
+                                td(colspan="3") 共
+                                    span.totalcount(style='color:red') #{usercarts.length}
+                                    | 种商品 总计金额：
+                                    span.totalprice(style='color:red') #{totalprice}
+                                    | ¥
+                    #balance
+                        a.btn.btn-danger.btn-xs.btn-balance(href='#') 结算
+                    if (pageInfo && pageInfo.totalPage > 1)
+                        include ../mixin
+                        +pagination(pageInfo)
+                else
+                    p 暂无商品
+
+block foot-js
+    script.
+        var token = '#{token}';
+
+        $(function(){
+            $('.btn-balance').click(function(){
+                var games = [];
+                var $checklist = $('.select-game');
+                $checklist.each(function(){
+                    var $target = $(this);
+                    if($target.prop('checked')){
+                        games.push($target.data('id'));
+                    }
+                });
+                if(games.length<=0){
+                    alert('请选择需要结算的游戏！');
+                    return;
+                }
+                var totalprice = Number($('.totalprice').text())          
+                var data = {
+                    games: games,
+                    'totalprice': totalprice,
+                    _csrf: token
+                };
+                console.log(data);
+                $.post('#{adminDir}/usercart/balance', data, function(json) {
+                    console.log(json);
+                    if(json.success === true) {
+                        window.location.href = '#{adminDir}/usercart/'+json.orderid+'/order'
+                    }else{
+                        alert(json.message);
+                    }
+                });
+                return false;
+            });
+
+            $('.select-all').click(function(){
+                var checked = $(this).prop('checked')
+                $('.select-game').prop('checked', checked);
+                countCart();
+            });  
+
+            $('.select-game').click(function(){
+                var count = 0;
+                var $checklist = $('.select-game');
+                $checklist.each(function(){
+                    var $target = $(this);
+                    if($target.prop('checked')){
+                        count++;
+                    }
+                });
+                if(count==$checklist.length){
+                    $('.select-all').prop('checked', true);
+                }else{
+                    $('.select-all').prop('checked', false);
+                }
+                countCart();
+            });      
+
+            $('.del-cart').click(delCart);            
+        });
+        
+        function countCart(){
+            var count = 0;
+            var totalprice = 0;
+            var $checklist = $('.select-game');
+            $checklist.each(function(){
+                var $target = $(this);
+                if($target.prop('checked')){
+                    totalprice+= Number($target.parent().next().next().text());
+                    count++;
+                }
+            });
+            $('.totalcount').text(count);
+            $('.totalprice').text(totalprice);
+        }        
+        function delCart(){
+            var $item = $(this).parent();             
+            var data = {
+                id: $(this).data('id'),
+                _csrf: token
+            };
+            $.post('#{adminDir}/usercart/del', data, function(json) {
+                alert(json.message);
+                if(json.success === true) {
+                    var totalprice = Number($('.totalprice').text())-Number($item.find('.price').text());
+                    var totalcount = Number($('.totalcount').text())-1;
+
+                    $('.totalcount').text(totalcount);
+                    $('.totalprice').text(totalprice);
+                    $item.remove();
+                }
+            });
+            return false;
+        }
+                
