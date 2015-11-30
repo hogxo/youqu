@@ -26,6 +26,8 @@ router.route('/:id/del').all(member.del);
 router.route('/change').post(member.change);
 //搜索游戏
 router.route('/search').post(member.search);
+//搜索游戏
+router.route('/level').post(member.level);
 
 module.exports = function(app) {
     var path = core.translateAdminDir('/member');
